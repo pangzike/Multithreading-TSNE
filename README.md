@@ -6,13 +6,13 @@ During the calculation of low dimensional distribution, I encountered the proble
 
 10k MNIST data sample of its test set was used as test data.
 
-![result](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/result.png)
+![result](image/result.png)
 
 > The above figure shows the visualization results of MNSIT training set (left) and test set (right) through tSNE. Because the dimension reduction is random, the same categories shown in the above figure are not in the same position.
 
 ## Experimental environment
 
-| 设备 |                         型号                         |
+|      |                       version                        |
 | :--: | :--------------------------------------------------: |
 | CPU  | Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz，2 * 64 核 |
 | GPU  |               NVIDIA GeForce RTX 3090                |
@@ -31,7 +31,7 @@ The dimensions that are most easily observed by our vision are one-dimensional, 
 
 T-SNE is a machine learning algorithm for dimensionality reduction. Different from the most commonly used linear dimensionality reduction algorithm PCA, it is a nonlinear dimensionality reduction algorithm, which is mainly suitable for dimensionality reduction of high-dimensional data to 2D or 3D for visualization. The following is a comparison of the effect of using t-SNE and PCA to visualize handwritten numerals:
 
-![pca&tsne](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/pca&tsne.png)
+![pca&tsne](image/pca&tsne.png)
 
 However, for the following reasons, TSNE is only used for visualization, and rarely for data dimensionality reduction
 
@@ -103,7 +103,7 @@ In addition, the t distribution is the superposition of an infinite number of Ga
 $$
 \frac{\delta C}{\delta y_{i}}=4 \sum_{j}\left(p_{i j}-q_{i j}\right)\left(y_{i}-y_{j}\right)\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}
 $$
-![probability](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/probability.png)
+![probability](image/probability.png)
 
 The effectiveness of t-sne can also be seen from the above figure: 
 
@@ -318,7 +318,7 @@ The numerator is a relatively small number. According to the statistical average
 
 Here we need to mention the storage principle of flow.
 
-![float](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/float.png)
+![float](image/float.png)
 
 It can be seen that the eight digits after the decimal point have reached the precision limit of the floating point number, so the Q value is no longer accurate, and the subsequent calculation of Gradient requires the use of the Q value. Especially when calculating KL divergence, the q value is on the denominator, and q is originally a small value, so its small error has a great impact on the calculation result, so we need to calculate a more accurate Q value.
 
@@ -450,7 +450,7 @@ $$
 
 At the beginning, it is also the easiest to think of, that is, to calculate the gradient for each matrix element (allocate height * reducedim threads), but each thread needs to loop the height (10k) internally, and the cost is unacceptable, so I allocate height * height threads, and each thread loops the reducedim. The task of thread ij is to calculate the contribution value of the jth data point to the gradient of the reducedim elements in the i-th line of gradient.
 
-![gradient](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/gradient.png)
+![gradient](gradient.png)
 
 As shown above, $f_ {i, j}$ corresponds to i and j in the above calculation gradient formula, which can be understood as the contribution value of the jth data point to the gradient in the i-th line. The red box marks the first organization form above, and the blue ellipse marks the second thread allocation method, which will obviously increase the parallelism rate.
 
@@ -464,7 +464,7 @@ So I came up with the method of using shared memory for reduction.
 
 However, the task requires reduction of each line. Because threads are organized in one dimension, a block may contain threads of different lines, as shown in red brackets below.
 
-![gradient3](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/gradient3.png)
+![gradient3](image/gradient3.png)
 
 It is meaningless to reduce the internal pairs of such blocks, so we need to reorganize the threads, as shown in the red box below. The blue part is our redundant part, and these threads do not perform meaningful calculations.
 
@@ -475,7 +475,7 @@ dim3 blocksize(64);
 dim3 gridsize(divup(height * divup(height, blocksize.x) * blocksize.x, blocksize.x));
 ```
 
-![gradient4](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/gradient4.png)
+![gradient4](image/gradient4.png)
 
 In this way, we can use the shared memory reduction inside the block to speed up the sum because the gradient matrix element position of each internal operation of the block is the same.
 
