@@ -73,9 +73,9 @@ H\left(P_{i}\right)=-\sum_{j} p_{j \mid i} \log _{2} p_{j \mid i}
 $$
 
 
-The degree of confusion can be explained as the number of effective nearest neighbors near a point **SNE is relatively robust to the adjustment of confusion, usually between 5-50 **. After a given, use binary search to find the appropriate $\sigma$.
+The degree of confusion can be explained as the number of effective nearest neighbors near a point **SNE is relatively robust to the adjustment of confusion, usually between 5-50**. After a given, use binary search to find the appropriate $\sigma$.
 
-For $y_i$ in low dimensions, we can specify that the variance of the Gaussian distribution is $ \frac {1} { \sqrt2} $, so the similarity between them is as follows:
+For $y_i$ in low dimensions, we can specify that the variance of the Gaussian distribution is $\frac {1}{ \sqrt2}$, so the similarity between them is as follows:
 
 
 $$
@@ -86,7 +86,7 @@ $$
 
 > Similarly, set $q_{i|i}$=0
 
-If the dimension reduction effect is good, and the local features remain intact, then $p_ {i∣j}$=$q_ {i|j} $, so we optimize the distance KL divergence between two distributions, so the objective function is as follows:
+If the dimension reduction effect is good, and the local features remain intact, then $p_ {i∣j}$=$q_ {i|j}$, so we optimize the distance KL divergence between two distributions, so the objective function is as follows:
 
 
 $$
@@ -94,7 +94,7 @@ C=\sum_{i} K L\left(P_{i} \| Q_{i}\right)=\sum_{i} \sum_{j} p_{j \mid i} \log \f
 $$
 
 
-After the given point $x_i$, Pi here represents conditional probability distribution of all other data points . It should be noted that **KL divergence is asymmetric **, and the penalty weights corresponding to different distances in low dimensional mapping are different. Specifically, two points that are far away from each other will produce greater costs if they are used to express two points that are close to each other. On the contrary, two points that are close to each other w ill produce less costs if they are used to express two points that are far away (note: similar to regression, it is easy to be affected by outliers, but the effect is opposite). Use the smaller $q_ {j|i}=0.2$ to model a large $p_ {j|i}=0.8, cost=p \times log ( \frac {p} {q})=1.11 $, also use the larger $q_ {j|i} =0.8$ to model a large $p_ {j|i}=0.2, cost=-0.277 $, so **SNE tends to retain local features in the data **.
+After the given point $x_i$, Pi here represents conditional probability distribution of all other data points . It should be noted that **KL divergence is asymmetric**, and the penalty weights corresponding to different distances in low dimensional mapping are different. Specifically, two points that are far away from each other will produce greater costs if they are used to express two points that are close to each other. On the contrary, two points that are close to each other w ill produce less costs if they are used to express two points that are far away (note: similar to regression, it is easy to be affected by outliers, but the effect is opposite). Use the smaller $q_ {j|i}=0.2$ to model a large $p_ {j|i}=0.8, cost=p \times log ( \frac {p} {q})=1.11 $, also use the larger $q_ {j|i} =0.8$ to model a large $p_ {j|i}=0.2, cost=-0.277 $, so **SNE tends to retain local features in the data**.
 
 #### TSNE algorithm
 
@@ -175,6 +175,8 @@ The dimension of distanceMatrix is height * height, and the calculation formula 
 $$
 distanceMatrix[i][j]=\sum_{k=1}^{width}(matrix[i][k]-matrix[j][k])^2
 $$
+
+
 The first idea is to allocate processes according to the number of distanceMatrix elements, and allocate height * height threads. Each process is calculated according to the above formula.
 
 The kernel function code is as follows:
@@ -246,6 +248,8 @@ The dimension of Q is height * height. The formula for calculating Q is as follo
 $$
 q_{i j}=\frac{\left(1+distanceMatrix[i][j]\right)^{-1}}{\sum_{k \neq l}\left(1+distanceMatrix[k][l]\right)^{-1}}
 $$
+
+
 The numerator of q is calculated according to the distance matrix, so it is easy to think of allocating height * height processes to calculate each element in parallel. However, the difficulty is the normalization of the denominator, which requires first calculating all the numerators and then summing them. This requires two-step operation. Cuda only has intra block synchronization, and we need to synchronize all the blocks, so it can only be implemented by two kernel functions, The first kernel function calculates all the numerator values and sums them, and the second kernel function calculates the numerator divided by the denominator to get the q value.
 
 Firstly, using global memory defines the denominator.
@@ -256,7 +260,7 @@ Firstly, using global memory defines the denominator.
 __device__ float sum_all;
 ```
 
-For each thread i j, judge whether it is a diagonal element, if yes, it is 0; If not, use `distance[i][j]` to calculate the molecular value `tmp` and record it in the register. Assign `tmp` to `Q [i] [j]` (here, the global memory is also written directly, because faster sharing or the life cycle of registers is consistent with that of the kernel function, so the number of kernels in the second step is not visible). Then sum each block first, and then The threads in which `threadIDX.x=0` add their result to `sum_ all` .
+For each thread i j, judge whether it is a diagonal element, if yes, it is 0; If not, use `distance[i][j]` to calculate the molecular value `tmp` and record it in the register. Assign `tmp` to `Q[i][j]` (here, the global memory is also written directly, because faster sharing or the life cycle of registers is consistent with that of the kernel function, so the number of kernels in the second step is not visible). Then sum each block first, and then The threads in which `threadIDX.x=0` add their result to `sum_all` .
 
 ```c++
 __global__ void compute_raw_Q(float *distanceMatrix, int width, int height, float* Q)
@@ -344,6 +348,8 @@ Let's review the formula for calculating Q:
 $$
 q_{i j}=\frac{\left(1+distanceMatrix[i][j]\right)^{-1}}{\sum_{k \neq l}\left(1+distanceMatrix[k][l]\right)^{-1}}
 $$
+
+
 The numerator is a relatively small number. According to the statistical average of 1e-3, the dimension of our Q matrix is height * height. In the experiment, it is 1w * 1w=1e8, so the denominator is probably a number of 1e5, and the average magnitude of q value is 1e-8. 
 
 Here we need to mention the storage principle of flow.
@@ -360,7 +366,7 @@ However, the 3090GPU in the experimental environment has poor processing capacit
 
 After exploration of functions and many experiments, I have given the following solutions:
 
-Use float type to calculate the sum of molecules inside the block; I divide multiple block into a cluster, and then use float to calculate and store the sum of molecules in the cluster; Set the ` sum_ all` is defined as double, and then the results of all clusters are summed again to get `sum_ all`。 Therefore, the operation of designing double is only at the last step, and only one variable of double type is defined.
+Use float type to calculate the sum of molecules inside the block; I divide multiple block into a cluster, and then use float to calculate and store the sum of molecules in the cluster; Set the ` sum_ all` is defined as double, and then the results of all clusters are summed again to get `sum_ all`. Therefore, the operation of designing double is only at the last step, and only one variable of double type is defined.
 
 Let's explain it step by step:
 
@@ -448,7 +454,7 @@ To summary, I don't really know why I can work in this way at last. I can guess 
 
 I set the blocksize to 128 (because I need to open a shared memory with the same size as the blocksize, I also need to consider the number of blocks placed in SM), so the original version requires 10k * 10k / 128= 781250 double atomic operations.
 
-My method only requires $((10k * 10k / 128) / cluster (16) / blocksize\_cluster (32) $times ≈ 1526 times, which greatly saves time.
+My method only requires $((10k * 10k / 128) / cluster (16) / blocksize\_cluster (32)$times ≈ 1526 times, which greatly saves time.
 
 Result:
 ```bash
@@ -457,7 +463,7 @@ the time cost by GPU is 6119680 ns
 Arrays match.
 ```
 
-**The parallel speedup ratio is 241 times **. Double operation is designed in the last step of the function. The function complexity of normalize is far less than that of the first two steps, but it takes 2/3 of the whole operation time.
+**The parallel speedup ratio is 241 times**. Double operation is designed in the last step of the function. The function complexity of normalize is far less than that of the first two steps, but it takes 2/3 of the whole operation time.
 
 If double is used on all of the calculation, the running result is
 
@@ -490,9 +496,9 @@ As shown above, $f_ {i, j}$ corresponds to i and j in the above calculation grad
 
 For the above calculation, an important flaw is this atomic operation. Multiple threads may need to modify the value of `gradient [i * reducedDim+k]` at the same time (that is, the ith line and the jth dimension of gradient).
 
-![gradient2](/Users/yangke/Documents/GitHub/Multithreading-TSNE/image/gradient2.png)
+![gradient2](image/gradient2.png)
 
-As shown in the figure, two blue circle threads may operate $ \frac { \delta C} { \delta y_ {height}} $ at the same time, resulting in a slower running speed. Moreover, it is an atomic operation of 10k threads, which costs a lot.
+As shown in the figure, two blue circle threads may operate $\frac{\delta C}{\delta y_ {height}}$ at the same time, resulting in a slower running speed. Moreover, it is an atomic operation of 10k threads, which costs a lot.
 
 So I came up with the method of using shared memory for reduction.
 
@@ -566,7 +572,7 @@ the time cost by GPU is 3348798 ns
 Arrays match.
 ```
 
-**The acceleration ratio is 449 **.
+**The acceleration ratio is 449**.
 
 ### Parallel updating
 
@@ -582,7 +588,7 @@ the time cost by GPU is 19895 ns
 Arrays match.
 ```
 
-**The speedup ratio is 15 times **. Although the speedup ratio of the function is not high, the update operation on the GPU will save a lot of time for the CPU and GPU to transmit data.
+**The speedup ratio is 15 times**. Although the speedup ratio of the function is not high, the update operation on the GPU will save a lot of time for the CPU and GPU to transmit data.
 
 ### Parallel computing loss
 
@@ -592,6 +598,8 @@ Arrays match.
 $$
 C=K L(P \| Q)=\sum_{i} \sum_{j} p_{i, j} \log \frac{p_{i j}}{q_{i j}}
 $$
+
+
 Organize height * height threads, and then reduce to sum.
 
 ### Parallel computing P
