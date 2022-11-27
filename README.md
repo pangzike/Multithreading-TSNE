@@ -54,7 +54,7 @@ SNE maps data points to probability distribution through affine transformation, 
 - SNE constructs a probability distribution between high-dimensional objects, so that similar objects have a higher probability of being selected, while dissimilar objects have a lower probability of being selected.
 - SNE constructs the probability distribution of these points in the low dimensional space to make the two probability distributions as similar as possible.
 
-SNE first **converts Euclidean distance into conditional probability to express the similarity between points **. Specifically, given N high-dimensional data $x_ 1,...,x_ N $, SNE first calculates probability $p_ {ij} $, proportional to the similarity between $x_ i $ and $x_j$ (this probability is self built), namely:
+SNE first **converts Euclidean distance into conditional probability to express the similarity between points**. Specifically, given N high-dimensional data $x_ 1,...,x_ N $, SNE first calculates probability $p_ {ij} $, proportional to the similarity between $x_ i $ and $x_j$ (this probability is self built), namely:
 
 $$
 p_{j \mid i}=\frac{\exp \left(-\left\|x_{i}-x_{j}\right\|^{2} /\left(2 \sigma_{i}^{2}\right)\right)}{\sum_{k \neq i} \exp \left(-\left\|x_{i}-x_{k}\right\|^{2} /\left(2 \sigma_{i}^{2}\right)\right)}
