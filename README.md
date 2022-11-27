@@ -72,6 +72,8 @@ $$
 The degree of confusion can be explained as the number of effective nearest neighbors near a point **SNE is relatively robust to the adjustment of confusion, usually between 5-50 **. After a given, use binary search to find the appropriate $\sigma$.
 
 For $y_i$ in low dimensions, we can specify that the variance of the Gaussian distribution is $ \frac {1} { \sqrt2} $, so the similarity between them is as follows:
+
+
 $$
 q_{j \mid i}=\frac{\exp \left(-\left\|x_{i}-x_{j}\right\|^{2}\right)}{\sum_{k \neq i} \exp \left(-\left\|x_{i}-x_{k}\right\|^{2}\right)}
 $$
