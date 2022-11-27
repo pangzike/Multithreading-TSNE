@@ -71,6 +71,8 @@ $$
 H\left(P_{i}\right)=-\sum_{j} p_{j \mid i} \log _{2} p_{j \mid i}
 \end{gathered}
 $$
+
+
 The degree of confusion can be explained as the number of effective nearest neighbors near a point **SNE is relatively robust to the adjustment of confusion, usually between 5-50 **. After a given, use binary search to find the appropriate $\sigma$.
 
 For $y_i$ in low dimensions, we can specify that the variance of the Gaussian distribution is $ \frac {1} { \sqrt2} $, so the similarity between them is as follows:
@@ -80,6 +82,8 @@ $$
 q_{j \mid i}=\frac{\exp \left(-\left\|x_{i}-x_{j}\right\|^{2}\right)}{\sum_{k \neq i} \exp \left(-\left\|x_{i}-x_{k}\right\|^{2}\right)}
 $$
 
+
+
 > Similarly, set $q_{i|i}$=0
 
 If the dimension reduction effect is good, and the local features remain intact, then $p_ {i∣j}$=$q_ {i|j} $, so we optimize the distance KL divergence between two distributions, so the objective function is as follows:
@@ -88,6 +92,8 @@ If the dimension reduction effect is good, and the local features remain intact,
 $$
 C=\sum_{i} K L\left(P_{i} \| Q_{i}\right)=\sum_{i} \sum_{j} p_{j \mid i} \log \frac{p_{j \mid i}}{q_{j \mid i}}
 $$
+
+
 After the given point $x_i$, Pi here represents conditional probability distribution of all other data points . It should be noted that **KL divergence is asymmetric **, and the penalty weights corresponding to different distances in low dimensional mapping are different. Specifically, two points that are far away from each other will produce greater costs if they are used to express two points that are close to each other. On the contrary, two points that are close to each other w ill produce less costs if they are used to express two points that are far away (note: similar to regression, it is easy to be affected by outliers, but the effect is opposite). Use the smaller $q_ {j|i}=0.2$ to model a large $p_ {j|i}=0.8, cost=p \times log ( \frac {p} {q})=1.11 $, also use the larger $q_ {j|i} =0.8$ to model a large $p_ {j|i}=0.2, cost=-0.277 $, so **SNE tends to retain local features in the data **.
 
 #### TSNE algorithm
@@ -103,18 +109,24 @@ In high dimensions, TSNE uses symmetric P, that is:
 $$
 p_{i j}=\frac{p_{i \mid j}+p_{j \mid i}}{2}
 $$
+
+
 T-SNE uses a heavier long tailed t-distribution in low dimensional space to avoid crowding problems and optimization problems.
 
 
 $$
 q_{i j}=\frac{\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}}{\sum_{k \neq l}\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}}
 $$
+
+
 In addition, the t distribution is the superposition of an infinite number of Gaussian distributions, which is not exponential in calculation and will be much more convenient. The gradient of optimization is as follows:
 
 
 $$
 \frac{\delta C}{\delta y_{i}}=4 \sum_{j}\left(p_{i j}-q_{i j}\right)\left(y_{i}-y_{j}\right)\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}
 $$
+
+
 ![probability](image/probability.png)
 
 The effectiveness of t-sne can also be seen from the above figure: 
@@ -472,7 +484,7 @@ $$
 
 At the beginning, it is also the easiest to think of, that is, to calculate the gradient for each matrix element (allocate height * reducedim threads), but each thread needs to loop the height (10k) internally, and the cost is unacceptable, so I allocate height * height threads, and each thread loops the reducedim. The task of thread ij is to calculate the contribution value of the jth data point to the gradient of the reducedim elements in the i-th line of gradient.
 
-![gradient](gradient.png)
+![gradient](image/gradient.png)
 
 As shown above, $f_ {i, j}$ corresponds to i and j in the above calculation gradient formula, which can be understood as the contribution value of the jth data point to the gradient in the i-th line. The red box marks the first organization form above, and the blue ellipse marks the second thread allocation method, which will obviously increase the parallelism rate.
 
