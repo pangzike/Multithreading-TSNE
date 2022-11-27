@@ -63,6 +63,8 @@ $$
 > Set $p_ {x|x} $=0, because we focus on the similarity between two pairs.
 
 One of the parameters here is $\sigma_{i}$. For different points, the value of $x_i$ is different, and the entropy of $P_i$ will change with σ I increase. SNE uses the concept of degree of confusion to find the best $\sigma$。 The degree of confusion refers to:
+
+
 $$
 \begin{gathered}
 \operatorname{Perp}\left(P_{i}\right)=2^{H\left(P_{i}\right)} \\
@@ -81,6 +83,8 @@ $$
 > Similarly, set $q_{i|i}$=0
 
 If the dimension reduction effect is good, and the local features remain intact, then $p_ {i∣j}$=$q_ {i|j} $, so we optimize the distance KL divergence between two distributions, so the objective function is as follows:
+
+
 $$
 C=\sum_{i} K L\left(P_{i} \| Q_{i}\right)=\sum_{i} \sum_{j} p_{j \mid i} \log \frac{p_{j \mid i}}{q_{j \mid i}}
 $$
@@ -94,14 +98,20 @@ Although SNE provides a good visualization method, it is difficult to optimize, 
 - In low dimensional space, t distribution is used instead of Gaussian distribution to express the similarity between two points.
 
 In high dimensions, TSNE uses symmetric P, that is:
+
+
 $$
 p_{i j}=\frac{p_{i \mid j}+p_{j \mid i}}{2}
 $$
 T-SNE uses a heavier long tailed t-distribution in low dimensional space to avoid crowding problems and optimization problems.
+
+
 $$
 q_{i j}=\frac{\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}}{\sum_{k \neq l}\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}}
 $$
 In addition, the t distribution is the superposition of an infinite number of Gaussian distributions, which is not exponential in calculation and will be much more convenient. The gradient of optimization is as follows:
+
+
 $$
 \frac{\delta C}{\delta y_{i}}=4 \sum_{j}\left(p_{i j}-q_{i j}\right)\left(y_{i}-y_{j}\right)\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}
 $$
@@ -148,6 +158,8 @@ The steps of the tSNE algorithm are:
 > code/function/D.cu
 
 The dimension of distanceMatrix is height * height, and the calculation formula is as follows:
+
+
 $$
 distanceMatrix[i][j]=\sum_{k=1}^{width}(matrix[i][k]-matrix[j][k])^2
 $$
@@ -217,6 +229,8 @@ I also considered that the distance matrix is symmetric. If the lower triangle i
 > code/function/Q.cu
 
 The dimension of Q is height * height. The formula for calculating Q is as follows:
+
+
 $$
 q_{i j}=\frac{\left(1+distanceMatrix[i][j]\right)^{-1}}{\sum_{k \neq l}\left(1+distanceMatrix[k][l]\right)^{-1}}
 $$
@@ -313,12 +327,16 @@ __global__ void compute_raw_Q(float *distanceMatrix, int width, int height, floa
 **However, this function has serious accuracy problems in the subsequent integration**.
 
 Let's review the formula for calculating Q:
+
+
 $$
 q_{i j}=\frac{\left(1+distanceMatrix[i][j]\right)^{-1}}{\sum_{k \neq l}\left(1+distanceMatrix[k][l]\right)^{-1}}
 $$
 The numerator is a relatively small number. According to the statistical average of 1e-3, the dimension of our Q matrix is height * height. In the experiment, it is 1w * 1w=1e8, so the denominator is probably a number of 1e5, and the average magnitude of q value is 1e-8. 
 
 Here we need to mention the storage principle of flow.
+
+
 
 ![float](image/float.png)
 
@@ -444,6 +462,8 @@ It is 1.22 times the speed of the above operation results, which should be relat
 > code/function/G.cu
 
 The matrix size of gradient is height * reducedim, and the calculation formula is as follows:
+
+
 $$
 \frac{\delta C}{\delta y_{i}}=4 \sum_{j}\left(p_{i j}-q_{i j}\right)\left(y_{i}-y_{j}\right)\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}
 $$
@@ -556,10 +576,10 @@ Arrays match.
 
 > code/function/L.cu
 
+
 $$
 C=K L(P \| Q)=\sum_{i} \sum_{j} p_{i, j} \log \frac{p_{i j}}{q_{i j}}
 $$
-
 Organize height * height threads, and then reduce to sum.
 
 ### Parallel computing P
