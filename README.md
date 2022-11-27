@@ -12,10 +12,10 @@ During the calculation of low dimensional distribution, I encountered the proble
 
 ## Experimental environment
 
-|      |                       version                        |
-| :--: | :--------------------------------------------------: |
-| CPU  | Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz，2 * 64 核 |
-| GPU  |               NVIDIA GeForce RTX 3090                |
+|      |                         version                         |
+| :--: | :-----------------------------------------------------: |
+| CPU  | Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz，2 * 64 cores |
+| GPU  |                 NVIDIA GeForce RTX 3090                 |
 
 > This experiment report uses height to represent the data volume (1w in the experiment), width to replace the original data dimension (50 in the experiment), and reducedim to represent the reduced dimension (2 in the experiment).
 
