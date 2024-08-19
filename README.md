@@ -1,4 +1,4 @@
-# Multithreading-TSNE
+# Multithreading t-SNE
 
 In this experiment, the TSNE high-dimensional data visualization algorithm is accelerated in parallel, and 8 functions are implemented using cuda, **which is 204 times faster**. 
 
